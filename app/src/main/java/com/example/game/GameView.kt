@@ -18,7 +18,15 @@ class GameView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : SurfaceView(context, attrs), SurfaceHolder.Callback {
 
-    val gameState = GameState()
+    private val prefs = context.getSharedPreferences("space_invaders_prefs", Context.MODE_PRIVATE)
+
+    val gameState = GameState(
+        initialHiScore = prefs.getInt("hi_score", 0),
+        initialMode = GameStateMode.SPLASH_SCREEN,
+        onHiScoreChanged = { newHiScore ->
+            prefs.edit().putInt("hi_score", newHiScore).apply()
+        }
+    )
     val gameRenderer = GameRenderer()
     val soundManager = RetroSoundManager(context)
     private var gameThread: GameThread? = null
@@ -102,8 +110,13 @@ class GameView @JvmOverloads constructor(
         var movingLeft = false
         var movingRight = false
 
-        // Deteta novo toque (disparo pontual)
+        // Deteta novo toque (disparo pontual ou toque na splash screen)
         if (actionMasked == MotionEvent.ACTION_DOWN || actionMasked == MotionEvent.ACTION_POINTER_DOWN) {
+            if (gameState.mode == GameStateMode.SPLASH_SCREEN) {
+                gameState.handleFire()
+                return true
+            }
+
             val px = gameRenderer.screenToLogicalX(event.getX(pointerIndex))
             val py = gameRenderer.screenToLogicalY(event.getY(pointerIndex))
 

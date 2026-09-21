@@ -207,8 +207,77 @@ class GameRenderer {
         canvas.drawRect(btnFireRect, buttonBorderPaint)
         canvas.drawText("DISPARO", btnFireRect.centerX(), btnFireRect.centerY() + 2.5f, buttonTextPaint)
 
-        // --- OVERLAYS DE ESTADO DE JOGO (GAME OVER / WAVE CLEARED) ---
-        if (gameState.mode == GameStateMode.GAME_OVER) {
+        // --- OVERLAYS DE ESTADO DE JOGO (SPLASH SCREEN / GAME OVER / WAVE CLEARED) ---
+        if (gameState.mode == GameStateMode.SPLASH_SCREEN) {
+            val bgBlack = Paint().apply {
+                color = Color.BLACK
+                style = Paint.Style.FILL
+            }
+            canvas.drawRect(0f, 0f, gameState.logicalWidth.toFloat(), gameState.logicalHeight.toFloat(), bgBlack)
+
+            val titlePaint = Paint().apply {
+                color = Color.rgb(0, 255, 68)
+                typeface = Typeface.MONOSPACE
+                textSize = 17f
+                textAlign = Paint.Align.CENTER
+                isFakeBoldText = true
+            }
+            canvas.drawText("SPACE INVADERS", 160f, 48f, titlePaint)
+
+            val tableTitlePaint = Paint().apply {
+                color = Color.WHITE
+                typeface = Typeface.MONOSPACE
+                textSize = 10f
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText("*SCORE ADVANCE TABLE*", 160f, 72f, tableTitlePaint)
+
+            // Tabela de pontuação clássica com sprites desenhados
+            val animFrame = ((gameState.frameCount / 18) % 2).toInt()
+            val spritePaint = Paint().apply { isFilterBitmap = false }
+
+            // UFO / Mystery Ship
+            canvas.drawBitmap(RetroSprites.mysteryShipBitmap, 98f, 85f, spritePaint)
+            val ptsPaint = Paint().apply {
+                color = Color.WHITE
+                typeface = Typeface.MONOSPACE
+                textSize = 9f
+                textAlign = Paint.Align.LEFT
+            }
+            canvas.drawText("=?  MYSTERY", 132f, 94f, ptsPaint)
+
+            // Squid / Lula (30 pts)
+            val squidBmp = if (animFrame == 0) RetroSprites.squidF1 else RetroSprites.squidF2
+            canvas.drawBitmap(squidBmp, 102f, 106f, spritePaint)
+            canvas.drawText("=30 POINTS", 132f, 115f, ptsPaint)
+
+            // Crab / Caranguejo (20 pts)
+            val crabBmp = if (animFrame == 0) RetroSprites.crabF1 else RetroSprites.crabF2
+            canvas.drawBitmap(crabBmp, 100f, 126f, spritePaint)
+            canvas.drawText("=20 POINTS", 132f, 135f, ptsPaint)
+
+            // Octopus / Polvo (10 pts)
+            val octBmp = if (animFrame == 0) RetroSprites.octopusF1 else RetroSprites.octopusF2
+            canvas.drawBitmap(octBmp, 99f, 146f, spritePaint)
+            canvas.drawText("=10 POINTS", 132f, 155f, ptsPaint)
+
+            val promptPaint = Paint().apply {
+                color = if ((gameState.frameCount / 15) % 2 == 0L) Color.YELLOW else Color.argb(160, 255, 255, 0)
+                typeface = Typeface.MONOSPACE
+                textSize = 10f
+                textAlign = Paint.Align.CENTER
+                isFakeBoldText = true
+            }
+            canvas.drawText("TOQUE NO ECRÃ PARA JOGAR", 160f, 195f, promptPaint)
+
+            val creditPaint = Paint().apply {
+                color = Color.GRAY
+                typeface = Typeface.MONOSPACE
+                textSize = 8f
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText("TAITO 1978 / ARCADE CLASSIC", 160f, 222f, creditPaint)
+        } else if (gameState.mode == GameStateMode.GAME_OVER) {
             val overlayPaint = Paint().apply {
                 color = Color.argb(190, 0, 0, 0)
                 style = Paint.Style.FILL

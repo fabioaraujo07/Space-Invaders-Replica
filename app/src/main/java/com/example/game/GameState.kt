@@ -6,6 +6,7 @@ import com.example.game.entities.MysteryShip
 import com.example.game.entities.Player
 
 enum class GameStateMode {
+    SPLASH_SCREEN,
     INITIALIZING,
     READY,
     RUNNING,
@@ -18,7 +19,11 @@ enum class GameStateMode {
  * Representa o estado do jogo e as propriedades lógicas da simulação.
  * Mantém a resolução lógica fixa em 320x240 para escala independente de dispositivo.
  */
-class GameState {
+class GameState(
+    initialHiScore: Int = 0,
+    initialMode: GameStateMode = GameStateMode.READY,
+    private val onHiScoreChanged: ((Int) -> Unit)? = null
+) {
     val logicalWidth: Int = 320
     val logicalHeight: Int = 240
 
@@ -37,7 +42,7 @@ class GameState {
     var score: Int = 0
         private set
 
-    var hiScore: Int = 0
+    var hiScore: Int = initialHiScore
         private set
 
     var wave: Int = 1
@@ -51,8 +56,10 @@ class GameState {
 
     private var respawnTimer: Float = 0f
     private var waveClearTimer: Float = 0f
+    var splashTimer: Float = 2.8f
+        private set
 
-    var mode: GameStateMode = GameStateMode.INITIALIZING
+    var mode: GameStateMode = initialMode
         private set
 
     var frameCount: Long = 0L
@@ -65,20 +72,15 @@ class GameState {
     var onPlayPlayerExplosion: (() -> Unit)? = null
     var onPlayUfoSound: (() -> Unit)? = null
 
-    init {
-        formation.onStepMade = { beat ->
-            onPlayMarchBeat?.invoke(beat)
-        }
-    }
-
     var currentFps: Int = 60
         private set
-
     private var fpsCounter: Int = 0
     private var fpsTimerAccumulator: Long = 0L
 
     init {
-        mode = GameStateMode.READY
+        formation.onStepMade = { beat ->
+            onPlayMarchBeat?.invoke(beat)
+        }
     }
 
     fun update(deltaTimeMs: Long) {
@@ -89,6 +91,15 @@ class GameState {
             currentFps = fpsCounter
             fpsCounter = 0
             fpsTimerAccumulator = 0L
+        }
+
+        if (mode == GameStateMode.SPLASH_SCREEN) {
+            val deltaSec = (deltaTimeMs / 1000f).coerceIn(0.001f, 10.0f)
+            splashTimer -= deltaSec
+            if (splashTimer <= 0f) {
+                mode = GameStateMode.RUNNING
+            }
+            return
         }
 
         if (mode == GameStateMode.READY) {
@@ -151,6 +162,10 @@ class GameState {
                 val bonus = mysteryShip.checkBulletCollision(player.bullet)
                 if (bonus > 0) {
                     score += bonus
+                    if (score > hiScore) {
+                        hiScore = score
+                        onHiScoreChanged?.invoke(hiScore)
+                    }
                     onPlayInvaderExplosion?.invoke()
                 }
             }
@@ -162,6 +177,7 @@ class GameState {
                     score += hitInvader.points
                     if (score > hiScore) {
                         hiScore = score
+                        onHiScoreChanged?.invoke(hiScore)
                     }
                     onPlayInvaderExplosion?.invoke()
 
@@ -259,6 +275,10 @@ class GameState {
     }
 
     fun handleFire(): Boolean {
+        if (mode == GameStateMode.SPLASH_SCREEN) {
+            mode = GameStateMode.RUNNING
+            return true
+        }
         if (mode == GameStateMode.GAME_OVER) {
             restartGame()
             return true

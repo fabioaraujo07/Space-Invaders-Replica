@@ -1,0 +1,6 @@
+{
+  "name": "Space Invaders",
+  "description": "Space Invaders clássico dos anos 80 em Android nativo com SurfaceView e Canvas",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
